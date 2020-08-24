@@ -11,7 +11,7 @@ var db;
 export default class App extends Component {
 
   state = {
-    text: null,
+    text: 'nothing..',
     downloaded: false,
   };
 
@@ -36,37 +36,38 @@ export default class App extends Component {
     
       // console.log((await FileSystem.getInfoAsync(`${sqliteDirectory}assets/data.db`)).exists);
       await FileSystem.downloadAsync(uriToDownload, `${sqliteDirectory}assets/data.db`);
-      
+      db = SQLite.openDatabase('./assets/data.db');
+      db.transaction(tx => {
+
+        console.log("TEST");
+        // tx.executeSql("select * from places");
+        tx.executeSql(
+          "select name, image from places",
+          [],
+          (_, resultSet) => {
+            console.log("SUCCESS");
+            this.setState({
+              text: resultSet.map(x => x.name),
+            })
+            // SUCCESS
+            setItems(resultSet);
+              console.log("resultSet : " + resultSet);
+            },
+          (dbError) => {
+            console.log("ERROR");
+            console.log("fail : " + dbError);
+          }
+        );
+      });
+      console.log("db : " + db);
+        
     } catch(error) {
         console.log(error);
     }
   }
   
   componentDidMount() {
-
     this.downloadDatabase();
-
-    db = SQLite.openDatabase('./assets/data.db');
-    console.log("db : " + db);
-    db.transaction(tx => {
-      try {
-        
-        // tx.executeSql("select * from places");
-          tx.executeSql(
-          "select name, image from places;",
-          (_, resultSet) => {
-             this.setState({
-               text: resultSet.map(x => x.name),
-             })
-            // SUCCESS
-            setItems(resultSet);
-            console.log("resultSet : " + resultSet);
-          },
-        );
-      } catch(error) {
-        console.log(error);
-      }
-    });
   };
   
   render() {
